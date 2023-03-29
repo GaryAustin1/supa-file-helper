@@ -75,7 +75,7 @@ begin
         loop
             path = paths[1];
             file_body = '{"prefixes":' || array_to_json(paths) || '}';
-            raise notice 'key= %, bucket = %, file_body = %, path = %, length = %', service_role_key, bucket, file_body, path, array_length(paths,1);
+            raise log 'key= %, bucket = %, file_body = %, path = %, length = %', service_role_key, bucket, file_body, path, array_length(paths,1);
 
             /*  http extension only case */
             if (http_enabled AND NOT pg_net_enabled) then
@@ -97,7 +97,7 @@ begin
                            url:=instance_url || '/storage/v1/object/' || bucket || '/' || path,
                            headers:= ('{"authorization": "Bearer ' || service_role_key || '"}')::jsonb
                        );
-                    raise notice 'pg_net loop path = %', path;
+                    raise log 'pg_net loop path = %', path;
                 end loop;
             end if;
 
@@ -113,13 +113,13 @@ begin
                               'application/json',
                               file_body
                             )::http_request) into delete_status;  --not sure delete status is useful from storage-API in this case
-                    raise notice 'both extensions-- http  paths = %', paths;
+                    raise log 'both extensions-- http  paths = %', paths;
                 else
                     perform net.http_delete(
                             url:=instance_url || '/storage/v1/object/' || bucket || '/' || path,
                             headers:= ('{"authorization": "Bearer ' || service_role_key || '"}')::jsonb
                         );
-                    raise notice 'both extensions-- pg_net path = %', path;
+                    raise log 'both extensions-- pg_net path = %', path;
                 end if;
             end if;
 
