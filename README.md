@@ -17,6 +17,7 @@ WARNING this code uses 3 columns in the storage.objects table.  Although the lik
   `metadata` Set to null so file is reported invalid by the API.  This is optional.
 
 There is a table in sb_custom_stuff schema that needs to be set up.
+  !!Please only enter your service_role key by hand in the table UI.  Do not put in code that might "escape" to the net.
 
 ![sb_custom_schema](https://user-images.githubusercontent.com/54564956/228620077-1caee708-717f-4bdc-b3fd-872b679baed1.JPG)
 
