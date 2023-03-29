@@ -1,11 +1,11 @@
-/* This SQL sets up a basic process for marking files to be deleted by a cron task will delete on a regular schedule.
+/* This SQL sets up a basic process for marking files to be deleted by a cron task and will delete them on a regular schedule.
    It has:
-   A cron task and function to delete a set files with what ever time period makes sense to manage staying ahead of the deletions.
-   A trigger on auth.users delete to call a function to mark the deleted files remove the foreign key.
+   A cron task and function to delete a set of files with whatever time period makes sense to manage staying ahead of the deletions.
+   A trigger on auth.users delete to call a function to mark the deleted files and remove the foreign key to auth.users.
    A function that shows how you can efficiently mark for delete specific user files and not deal with the actual storage delete.
 
    It requires your instance URL and your service_role_key
-   Also shown in an extra schema and table for storing your url and service_role key
+   Also shown is an extra schema and table for storing your url and service_role key
  */
 
 create schema if not exists sb_custom_stuff;
@@ -102,6 +102,7 @@ begin
             end if;
 
             /* http and pg_net together */
+            /* note >2 can be tweaked for using pg_net in a loop for more files.  The tradeoff is number API calls versus time for synch response from http */
             if (http_enabled AND pg_net_enabled) then
                 if (array_length(paths,1) > 2) then
                     select status FROM
