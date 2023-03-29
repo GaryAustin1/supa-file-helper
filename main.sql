@@ -16,7 +16,7 @@ create table if not exists sb_custom_stuff.system_values (
 );
 insert into sb_custom_stuff.system_values (name, value) values
     ('files_per_cron', 40),
-    ('service_role_key',''),
+    ('service_role_key',''), /* DO NOT SET YOUR SERVICE ROLE KEY HERE.  ONLY UPDATE THE TABLE IN THE UI WITH YOUR KEY */
     ('instance_url',''),
     ('http_enabled',false),
     ('pg_net_enabled',false);
