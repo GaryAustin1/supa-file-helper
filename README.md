@@ -1,6 +1,7 @@
 # supa-file-helper
 SQL code for managing deletion of storage objects in Supabase
 
+Note: 8/23/23 -- Supabase is removing the foreign key on owner in v3 of storage (resumable).  When that happens the cron task should be able to look for owner ids that are not in auth.users.  This might be a better approach when that version is completely rolled out.
 
 This SQL sets up a basic process for marking files to be deleted by a cron task and will delete on a regular schedule.  
    It has:  
