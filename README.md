@@ -1,3 +1,6 @@
+Supabase has released the new version of storage and the parts of code here dealing with owner column have to be adjusted to also deal with owner_id for non-uuid sub claims.
+
+
 # supa-file-helper
 SQL code for managing deletion of storage objects in Supabase
 
