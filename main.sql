@@ -4,33 +4,20 @@
    A trigger on auth.users delete to call a function to mark the deleted files and remove the foreign key to auth.users.
    A function that shows how you can efficiently mark for delete specific user files and not deal with the actual storage delete.
 
-   It requires your instance URL and your service_role_key
-   Also shown is an extra schema and table for storing your url and service_role key
+   It requires your instance URL and your service_role_key.  These can be stored in Vault as SUPABASE_URL and SUPABASE_SERVICE_KEY.
+
  */
 
-create schema if not exists sb_custom_stuff;
-
-create table if not exists sb_custom_stuff.system_values (
-    name text primary key,
-    value text
-);
-insert into sb_custom_stuff.system_values (name, value) values
-    ('files_per_cron', 40),
-    ('service_role_key',''), /* DO NOT SET YOUR SERVICE ROLE KEY HERE.  ONLY UPDATE THE TABLE IN THE UI WITH YOUR KEY */
-    ('instance_url',''),
-    ('http_enabled',false),
-    ('pg_net_enabled',false);
 
 /* You can use both http and pg_net extension or comment out one or the other. */
 /* pg_net is much faster for single deletes in a bucket.  http allows bulk deletes so fewer api calls if there are alot of files in a bucket. */
+/* set flags in clean_files function for which ones to use */
 
 create extension if not exists http
     with schema extensions;
-update sb_custom_stuff.system_values set value = true where name = 'http_enabled';
 
 create extension if not exists pg_net
     with schema extensions;
-update sb_custom_stuff.system_values set value = true where name = 'pg_net_enabled';
 
 create extension if not exists pg_cron
     with schema extensions;
@@ -43,32 +30,29 @@ create or replace function public.clean_files ()
 declare
     /* it is highly recommended to move the service_role key and url to Vault
        or to a separate table not accessible to the API to allow easy setup for different instances.
-       In this example you store your code in sb_custom_stuff schema in the system_values table.
+       In this example you store your keys in Vault.
      */
 
     service_role_key text;
     instance_url text;
-    files_per_cron int := 10; /* also loaded from system_values */
-    http_enabled boolean;
-    pg_net_enabled boolean;
+    files_per_cron int := 10;
+    http_enabled boolean := true;
+    pg_net_enabled boolean := true;
     delete_status text;
     bucket text;
     paths text[];
     file_body text;
     path text;
 begin
-    select value into service_role_key from sb_custom_stuff.system_values where name = 'service_role_key';
-    select value into instance_url from sb_custom_stuff.system_values where name = 'instance_url';
-    select value into files_per_cron from sb_custom_stuff.system_values where name = 'files_per_cron';
-    select value into http_enabled from sb_custom_stuff.system_values where name = 'http_enabled';
-    select value into pg_net_enabled from sb_custom_stuff.system_values where name = 'pg_net_enabled';
+    select decrypted_secret into instance_url from vault.decrypted_secrets where name = 'SUPABASE_URL';
+    select decrypted_secret into service_role_key from vault.decrypted_secrets where name = 'SUPABASE_SERVICE_KEY';
 
-    raise log 'CFILE clean_files';
+    raise log 'Clean_files';
 
     for bucket, paths in
         select bucket_id, array_agg(name) from (
                select bucket_id, name from storage.objects
-               where owner is null and created_at = to_timestamp(0)
+               where owner_id = 'Delete_this'
                order by bucket_id
                limit files_per_cron) as names
         group by bucket_id
@@ -165,8 +149,8 @@ begin
     /* Mark all other files for this user as deletable */
     update storage.objects set
         owner = null,
-        created_at = to_timestamp(0),
-        metadata = null
+        owner_id = 'Delete_this',
+        metadata = null   -- optional
     where owner = old.id;
     return old;
 end;
@@ -181,12 +165,12 @@ create trigger before_delete_user
 /* This function can be called by an authenticated user to delete only from approved buckets */
 create or replace function public.mark_file_for_delete(bucket text, filepath text)
     returns void as $$
-declare bucket_list text[] := '{"test","testp"}';
+declare bucket_list text[] := '{"test","testp","test4"}';  -- approved  buckets
 begin
     update storage.objects set
        owner = null,
-       created_at = to_timestamp(0),
-       metadata = null
+       owner_id = 'Delete_this',
+       metadata = null                     -- optional
     where bucket_id = any(bucket_list) and bucket_id = bucket
       and owner = auth.uid() and auth.uid() is not null and name = filepath;
 
