@@ -1,6 +1,8 @@
 # supa-file-helper
 SQL code for managing deletion of storage objects in Supabase
 
+3/18/2025 -- pg_net now supports a body on delete so using http extension can be eliminated and bulk delete can be done with pg_net... not implemented yet.
+
 5/27/2024 -- updated to use the new owner_id and fact that owner is no longer linked to auth.users.
 
 This SQL sets up a basic process for marking files to be deleted by a cron task and will delete on a regular schedule.  
