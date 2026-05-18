@@ -1,5 +1,6 @@
 # supa-file-helper
 SQL code for managing deletion of storage objects in Supabase
+5/18/2026 -- It appears if you use the new sb_ style secret key you also need to add the apikey header to the calls.  Code does not reflect that.
 
 3/18/2025 -- pg_net now supports a body on delete so using http extension can be eliminated and bulk delete can be done with pg_net... not implemented yet.
 
